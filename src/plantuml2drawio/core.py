@@ -1,17 +1,16 @@
 """Core functionality for PlantUML to Draw.io conversion."""
 
 import argparse
+import json
 import os
-import re
 import sys
 from typing import Optional, Tuple
 
 from plantuml2drawio.config import (DEFAULT_DRAWIO_EXT, DEFAULT_JSON_EXT,
-                                    DIAGRAM_TYPE_ACTIVITY,
-                                    DIAGRAM_TYPE_NOT_PLANTUML,
                                     FILE_EXTENSION_PUML, OUTPUT_FORMAT_JSON,
                                     OUTPUT_FORMAT_XML)
-from plantuml2drawio.processors import ProcessorRegistry
+from plantuml2drawio.drawio_embed_converter import (ConversionError,
+                                                    convert_plantuml_to_drawio_xml)
 
 
 def process_diagram(
@@ -31,32 +30,25 @@ def process_diagram(
         print("Error: Empty PlantUML content")
         return None, None
 
-    # Determine diagram type
-    diagram_type, processor_class = ProcessorRegistry.detect_diagram_type(
-        plantuml_content
-    )
-    if not processor_class:
-        print(f"Error: Unsupported diagram type: {diagram_type}")
-        return None, None
-
-    # Create processor instance
-    processor = processor_class()
-
-    # Check if diagram is valid
-    if not processor.is_valid_diagram(plantuml_content):
-        print(f"Error: Invalid {diagram_type} diagram")
-        return None, None
-
     try:
-        # Process the diagram
-        output_format = OUTPUT_FORMAT_JSON if output_json else OUTPUT_FORMAT_XML
+        drawio_xml = convert_plantuml_to_drawio_xml(plantuml_content)
 
         if output_json:
-            output_content = processor.convert_to_json(plantuml_content)
-        else:
-            output_content = processor.convert_to_drawio(plantuml_content)
+            output_content = json.dumps(
+                {
+                    "engine": "rglaue/plantuml_to_drawio-compatible",
+                    "outputFormat": OUTPUT_FORMAT_XML,
+                    "drawioXml": drawio_xml,
+                },
+                indent=2,
+            )
+            return output_content, OUTPUT_FORMAT_JSON
 
-        return output_content, output_format
+        return drawio_xml, OUTPUT_FORMAT_XML
+
+    except ConversionError as e:
+        print(f"Error: {e}")
+        return None, None
 
     except Exception as e:
         print(f"Unexpected error during processing: {e}")
@@ -134,17 +126,11 @@ def get_output_file_path(
     return base + extension
 
 
-def handle_info_request(diagram_type: str) -> None:
-    """Display information about the detected diagram type.
-
-    Args:
-        diagram_type: Detected diagram type
-    """
-    print(f"Diagram type: {diagram_type}")
-    if diagram_type == DIAGRAM_TYPE_NOT_PLANTUML:
-        print("This does not appear to be a valid PlantUML file.")
-    elif diagram_type != DIAGRAM_TYPE_ACTIVITY:
-        print("Note: Currently only activity diagrams are supported for conversion.")
+def handle_info_request(content: str) -> None:
+    """Display information about the current input and conversion engine."""
+    is_plantuml = "@startuml" in content and "@enduml" in content
+    print(f"PlantUML markers detected: {'yes' if is_plantuml else 'no'}")
+    print("Converter engine: rglaue/plantuml_to_drawio-compatible SVG embed pipeline")
 
 
 def main() -> None:
@@ -180,12 +166,9 @@ def main() -> None:
     if plantuml_content is None:
         sys.exit(1)
 
-    # Determine diagram type
-    diagram_type, _ = ProcessorRegistry.detect_diagram_type(plantuml_content)
-
     # Only show information if requested
     if args.info:
-        handle_info_request(diagram_type)
+        handle_info_request(plantuml_content)
         sys.exit(0)
 
     # Determine output file

@@ -191,7 +191,7 @@
     downloadBtn.addEventListener("click", () => {
         if (!lastResult) return;
         const isJson = formatSel.value === "json";
-        const ext = isJson ? ".json" : ".drawio";
+        const ext = isJson ? ".json" : ".drawio.xml";
         const mime = isJson ? "application/json" : "application/xml";
 
         triggerDownload(new Blob([lastResult], { type: mime }), "diagram" + ext);

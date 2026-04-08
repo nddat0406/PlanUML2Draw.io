@@ -100,7 +100,7 @@ def convert_batch():
         return jsonify({"error": "No files uploaded"}), 400
 
     output_json = request.form.get("format") == "json"
-    output_extension = ".json" if output_json else ".drawio"
+    output_extension = ".json" if output_json else ".drawio.xml"
     archive_buffer = io.BytesIO()
     converted_files = []
     failed_files = []

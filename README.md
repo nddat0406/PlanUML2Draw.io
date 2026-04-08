@@ -179,9 +179,6 @@ plantuml2drawio/
 │   │   ├── app.py               # GUI application
 │   │   ├── config.py            # Configuration settings
 │   │   └── drawio_embed_converter.py # SVG embed converter for Draw.io XML
-│   └── processors/              # Diagram processors
-│       ├── base_processor.py    # Base class for processors
-│       └── activity_processor.py # Activity diagram processor
 ├── web_app.py                   # Flask web server
 ├── templates/                   # HTML templates for web UI
 ├── static/                      # CSS and JavaScript for web UI

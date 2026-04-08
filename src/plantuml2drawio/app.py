@@ -9,11 +9,11 @@ os.environ['TK_SILENCE_DEPRECATION'] = '1'
 try:
     # Installed package path
     from plantuml2drawio.config import VERSION, VERSION_DATE
-    from plantuml2drawio.processors.activity_processor import is_valid_activity_diagram
+    from plantuml2drawio.core import process_diagram
 except ImportError:
     # Development path
     from src.plantuml2drawio.config import VERSION, VERSION_DATE
-    from src.plantuml2drawio.processors.activity_processor import is_valid_activity_diagram
+    from src.plantuml2drawio.core import process_diagram
 
 
 class FileSelectorApp:
@@ -264,9 +264,9 @@ class FileSelectorApp:
             else "Keine Datei ausgewählt"
         )
 
-        if is_valid_activity_diagram(content):
+        if "@startuml" in content and "@enduml" in content:
             self.filename_label.configure(
-                text=f"{filename_text} | Diagramm-Typ: Aktivitätsdiagramm"
+                text=f"{filename_text} | Diagramm-Typ: PlantUML"
             )
         else:
             self.filename_label.configure(
@@ -277,7 +277,7 @@ class FileSelectorApp:
         """Update text widget state and enable/disable convert button based on content."""
         content = self.text_widget.get("1.0", "end")
 
-        # Enable convert button only if valid PlantUML activity diagram detected
+        # Enable convert button when content looks like PlantUML
         if "@startuml" in content and "@enduml" in content:
             self.convert_button.configure(state="normal")
             # Update diagram type
@@ -490,51 +490,10 @@ class FileSelectorApp:
         try:
             # Get content from text widget (in case user modified it)
             puml_content = self.text_widget.get("1.0", self.ctk.END)
-
-            # Parse PlantUML
-            try:
-                # Process the diagram
-                from plantuml2drawio.processors import ProcessorRegistry
-
-                diagram_type, processor_class = ProcessorRegistry.detect_diagram_type(
-                    puml_content
-                )
-
-                if not processor_class:
-                    # Zeige Nachricht im message_label statt im Text-Widget
-                    self.message_label.configure(
-                        text=f"Fehler: Nicht unterstützter Diagrammtyp: {diagram_type}"
-                    )
-                    return
-
-                processor = processor_class()
-
-            except Exception as parse_error:
-                # Zeige Nachricht im message_label statt im Text-Widget
+            xml_content, _ = process_diagram(puml_content, output_json=False)
+            if not xml_content:
                 self.message_label.configure(
-                    text=f"Fehler beim Parsen des PlantUML-Codes: {parse_error}"
-                )
-                return
-
-            # Do layout
-            try:
-                # Anpassung der Methodenaufrufe an die tatsächliche API des Processors
-                nodes, edges = processor.parse_diagram(puml_content)
-                processor.layout_diagram(nodes, edges)
-            except Exception as layout_error:
-                # Zeige Nachricht im message_label statt im Text-Widget
-                self.message_label.configure(
-                    text=f"Fehler beim Layout des Diagramms: {layout_error}"
-                )
-                return
-
-            # Generate XML
-            try:
-                xml_content = processor.convert_to_drawio(puml_content)
-            except Exception as xml_error:
-                # Zeige Nachricht im message_label statt im Text-Widget
-                self.message_label.configure(
-                    text=f"Fehler bei der XML-Generierung: {xml_error}"
+                    text="Fehler bei der Konvertierung. Bitte prüfen Sie Java/PlantUML-Konfiguration und PlantUML-Syntax."
                 )
                 return
 
@@ -566,17 +525,17 @@ class FileSelectorApp:
         """Show a save dialog and return the selected path or None if cancelled."""
         # Determine default filename
         default_filename = (
-            f"{os.path.splitext(os.path.basename(self.current_file_path))[0]}.drawio"
+            f"{os.path.splitext(os.path.basename(self.current_file_path))[0]}.drawio.xml"
             if self.current_file_path
-            else "untitled.drawio"
+            else "untitled.drawio.xml"
         )
 
         # Show save dialog to choose storage location
         save_path = self.ctk.filedialog.asksaveasfilename(
             title="Draw.io-Datei speichern",
             initialfile=default_filename,
-            defaultextension=".drawio",
-            filetypes=[("Draw.io Files", "*.drawio")],
+            defaultextension=".drawio.xml",
+            filetypes=[("Draw.io XML Files", "*.drawio.xml")],
         )
 
         return save_path
