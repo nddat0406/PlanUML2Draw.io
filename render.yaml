@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: plantuml2drawio-web
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements-web.txt
+      pip install -e .
+    startCommand: waitress-serve --host 0.0.0.0 --port $PORT web_app:app
+    autoDeploy: true
