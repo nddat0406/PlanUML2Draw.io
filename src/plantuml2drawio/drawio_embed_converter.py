@@ -64,7 +64,7 @@ def render_svg(plantuml_content: str, java_bin: str = DEFAULT_JAVA_BIN) -> str:
 
     try:
         process = subprocess.run(
-            [java_bin, "-jar", str(jar_path), "-tsvg", "-pipe"],
+            [java_bin, "-Djava.awt.headless=true", "-jar", str(jar_path), "-tsvg", "-pipe"],
             input=plantuml_content,
             text=True,
             encoding="utf-8",

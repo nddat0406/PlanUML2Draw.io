@@ -165,6 +165,12 @@ Lưu ý:
 - PlantUML jar sẽ được tải tự động ở request convert đầu tiên nếu chưa cấu hình `PLANTUML_JAR_PATH`
 - Nếu muốn đóng gói jar sẵn trong image, thêm file jar vào `tools/` và copy trong `Dockerfile`
 
+Khắc phục lỗi Java/font khi convert trên server:
+
+- Nếu gặp lỗi `libfontmanager.so: libharfbuzz.so.0` hoặc `Please install openjdk-*-jre...`, cần đảm bảo image có các thư viện hệ thống cho font/render (đã được cấu hình sẵn trong `Dockerfile` hiện tại)
+- Sau khi pull code mới, hãy redeploy lại để Render build image mới
+- Nếu service cũ vẫn dùng cache, bấm `Clear build cache` rồi deploy lại
+
 ## 📦 Project Structure
 
 The project has been reorganized for better maintainability and extensibility:
