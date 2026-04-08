@@ -18,3 +18,4 @@ htmlcov/
 *.pyd
 .Python
 .eggs/
+tools/
