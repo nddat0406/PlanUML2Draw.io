@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+"""
+GUI entry point for plantuml2drawio.
+"""
+import os
+import sys
+
+# Add the src directory to the Python path when used in development mode
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+# Try to run the app
+try:
+    # First try the installed module path
+    from plantuml2drawio.app import main
+except ImportError:
+    # Fall back to development path
+    from src.plantuml2drawio.app import main
+
+if __name__ == "__main__":
+    main()

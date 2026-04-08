@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantUML to Draw.io Converter</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>PlantUML &rarr; Draw.io Converter</h1>
+        <p class="subtitle">Paste your PlantUML activity diagram and get a Draw.io importable file</p>
+    </header>
+
+    <main>
+        <div class="editor-panel">
+            <div class="panel-header">
+                <h2>PlantUML Input</h2>
+                <div class="controls">
+                    <select id="format-select" title="Output format">
+                        <option value="xml" selected>Draw.io XML</option>
+                        <option value="json">JSON</option>
+                    </select>
+                    <button id="convert-btn" class="btn-primary">Convert</button>
+                </div>
+            </div>
+            <textarea id="plantuml-input" spellcheck="false" placeholder="@startuml
+start
+:Step 1;
+if (Condition?) then (yes)
+  :Step 2a;
+else (no)
+  :Step 2b;
+endif
+:Step 3;
+stop
+@enduml">@startuml
+start
+:Step 1;
+if (Condition?) then (yes)
+  :Step 2a;
+else (no)
+  :Step 2b;
+endif
+:Step 3;
+stop
+@enduml</textarea>
+        </div>
+
+        <div class="output-panel">
+            <div class="panel-header">
+                <h2>Draw.io Output</h2>
+                <div class="controls">
+                    <button id="copy-btn" class="btn-secondary" disabled>Copy</button>
+                    <button id="download-btn" class="btn-secondary" disabled>Download .drawio</button>
+                </div>
+            </div>
+            <textarea id="drawio-output" spellcheck="false" readonly placeholder="Converted output will appear here..."></textarea>
+        </div>
+
+        <div id="error-banner" class="error-banner hidden"></div>
+    </main>
+
+    <footer>
+        <p>Powered by <a href="https://github.com/doubleSlashde/plantuml2drawio" target="_blank" rel="noopener">plantuml2drawio</a> &mdash; Currently supports activity diagrams</p>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

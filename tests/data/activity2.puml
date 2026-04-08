@@ -1,0 +1,12 @@
+@startuml Test3
+start
+:Start des Prozesses;
+if (Bedingung erfüllt?) then (Ja)
+  :Aktion 1 ausführen;
+else (Nein)
+  :Aktion 2 ausführen;
+  :Aktion 3 ausführen;
+endif
+:Prozess beenden;
+stop
+@enduml

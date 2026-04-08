@@ -1,0 +1,22 @@
+@startuml Activity Example
+
+start
+
+:Kunde besucht den Online-Shop;
+if (Produkt auswählen über Suchfunktion) then (ja)
+    :Kunde sucht sein Produkt
+    über die Suchfunktion;
+    :Kunde wählt ein Produkt
+    aus den Suchvorschlägen;
+else (nein)
+    :Kunde wählt ein Produkt
+    von der Startseite des Shops;
+    :Kunde liest die
+    Beschreibung des Produkts
+    auf der Produktseite;
+endif
+
+
+stop
+
+@enduml

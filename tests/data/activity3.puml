@@ -1,0 +1,20 @@
+@startuml Activity Example
+start
+:Aktion;
+if (Bedingung1) then (Ja1)
+  :Aktion3;
+else (Nein1)
+  :Aktion4;
+  if (Bedingung2) then (Ja2)
+    :Aktion5;
+    if (Bedingung3) then (Ja3)
+      :Aktion36;
+    else (Nein3)
+      :Aktion37;
+    endif
+  else (Nein2)
+    :Aktion6;
+  endif
+endif
+stop
+@enduml

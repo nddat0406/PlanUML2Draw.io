@@ -1,0 +1,10 @@
+@startuml Activity Example
+start
+
+:Das ist eine Aktion;
+:Und das ist eine andere Aktion;
+:Aktion3;
+:Aktion4;
+
+stop
+@enduml

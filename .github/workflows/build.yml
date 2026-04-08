@@ -1,0 +1,154 @@
+name: Build Executables
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-build.txt
+
+      - name: Update version numbers
+        shell: python
+        run: |
+          import re, os
+          from datetime import datetime
+          version = os.environ['GITHUB_REF'].split('/')[-1].replace('v', '')
+          files_to_update = [
+              'src/plantuml2drawio/app.py',
+              'src/plantuml2drawio/config.py',
+              'src/plantuml2drawio/__init__.py',
+              'setup.py'
+          ]
+          for path in files_to_update:
+              txt = open(path, encoding='utf-8').read()
+              txt = re.sub(r'VERSION = "[^"]*"', f'VERSION = "{version}"', txt)
+              txt = re.sub(r'__version__ = "[^"]*"', f'__version__ = "{version}"', txt)
+              txt = re.sub(r'version="[^"]*"', f'version="{version}"', txt)
+              if path.endswith('config.py'):
+                  txt = re.sub(r'VERSION_DATE = "[^"]*"', f'VERSION_DATE = "{datetime.now():%Y-%m-%d}"', txt)
+              open(path, 'w', encoding='utf-8').write(txt)
+
+      - name: Build Windows executable
+        run: |
+          python build_windows.py
+        shell: powershell
+        working-directory: build-scripts
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: p2d-windows
+          path: dist/windows/PlantUML2DrawIO/**
+          if-no-files-found: error
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-build.txt
+
+      - name: Update version numbers
+        shell: python
+        run: |
+          import re, os
+          from datetime import datetime
+          version = os.environ['GITHUB_REF'].split('/')[-1].replace('v', '')
+          files_to_update = [
+              'src/plantuml2drawio/app.py',
+              'src/plantuml2drawio/config.py',
+              'src/plantuml2drawio/__init__.py',
+              'setup.py'
+          ]
+          for path in files_to_update:
+              txt = open(path, encoding='utf-8').read()
+              txt = re.sub(r'VERSION = "[^"]*"', f'VERSION = "{version}"', txt)
+              txt = re.sub(r'__version__ = "[^"]*"', f'__version__ = "{version}"', txt)
+              txt = re.sub(r'version="[^"]*"', f'version="{version}"', txt)
+              if path.endswith('config.py'):
+                  txt = re.sub(r'VERSION_DATE = "[^"]*"', f'VERSION_DATE = "{datetime.now():%Y-%m-%d}"', txt)
+              open(path, 'w', encoding='utf-8').write(txt)
+
+      - name: Build macOS app
+        run: |
+          python build_mac.py
+        working-directory: build-scripts
+
+      - name: Set execute permissions
+        run: |
+          chmod +x dist/mac/PlantUML2DrawIO.app/Contents/MacOS/PlantUML2DrawIO
+          # Set permissions for all files in the app bundle
+          find dist/mac/PlantUML2DrawIO.app -type f -exec chmod 644 {} \;
+          find dist/mac/PlantUML2DrawIO.app -type d -exec chmod 755 {} \;
+          chmod 755 dist/mac/PlantUML2DrawIO.app/Contents/MacOS/PlantUML2DrawIO
+
+      - name: Create macOS ZIP with proper permissions
+        run: |
+          cd dist/mac
+          ditto -c -k --keepParent PlantUML2DrawIO.app PlantUML2DrawIO-macOS.zip
+          cd ../..
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: p2d-macos
+          path: dist/mac/PlantUML2DrawIO-macOS.zip
+          if-no-files-found: error
+
+  create-release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: p2d-windows
+          path: win
+
+      - name: Create Windows zip
+        run: |
+          cd win
+          zip -r ../p2d-windows.zip .
+          cd ..
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: p2d-macos
+          path: mac
+
+      - name: Rename macOS ZIP for release
+        run: |
+          mv mac/PlantUML2DrawIO-macOS.zip p2d-macos.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            p2d-windows.zip
+            p2d-macos.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
